@@ -1,0 +1,3 @@
+subscription_outcome,count,mean_age,median_age,std_age
+Subscribed,4639,40.91,37.0,13.84
+Not Subscribed,36537,39.91,38.0,9.9

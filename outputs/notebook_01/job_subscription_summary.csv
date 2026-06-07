@@ -1,0 +1,13 @@
+job,total_customers,subscribers,non_subscribers,subscription_rate_%
+student,875,275,600,31.43
+retired,1718,434,1284,25.26
+unemployed,1014,144,870,14.2
+admin.,10419,1351,9068,12.97
+management,2924,328,2596,11.22
+unknown,330,37,293,11.21
+technician,6739,730,6009,10.83
+self-employed,1421,149,1272,10.49
+housemaid,1060,106,954,10.0
+entrepreneur,1456,124,1332,8.52
+services,3967,323,3644,8.14
+blue-collar,9253,638,8615,6.9

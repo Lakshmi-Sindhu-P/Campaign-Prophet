@@ -1,0 +1,4 @@
+poutcome,total_customers,subscribers,non_subscribers,subscription_rate_%
+success,1373,894,479,65.11
+failure,4252,605,3647,14.23
+nonexistent,35551,3140,32411,8.83
