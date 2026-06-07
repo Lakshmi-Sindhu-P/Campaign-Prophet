@@ -496,7 +496,7 @@ See the [dataset page](https://archive.ics.uci.edu/dataset/222/bank+marketing) f
 
 Have questions about the methodology, want to discuss the project, or interested in collaboration?
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Lakshmi_Sindhu_Pulugundla-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/your-linkedin-handle)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Lakshmi_Sindhu_Pulugundla-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lakshmi-sindhu-p/)
 [![Email](https://img.shields.io/badge/Email-sindhu.pl@outlook.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:sindhu.pl@outlook.com)
 
 ---
