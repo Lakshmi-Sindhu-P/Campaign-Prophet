@@ -1,0 +1,19 @@
+{
+  "usd": {
+    "Conservative": {"cost_per_contact": 15, "revenue_per_success": 300},
+    "Base Case": {"cost_per_contact": 10, "revenue_per_success": 500},
+    "Optimistic": {"cost_per_contact": 5, "revenue_per_success": 1000}
+  },
+  "eur": {
+    "Conservative": {"cost_per_contact": 12, "revenue_per_success": 150},
+    "Base Case": {"cost_per_contact": 10, "revenue_per_success": 250},
+    "Optimistic": {"cost_per_contact": 7, "revenue_per_success": 450}
+  },
+  "operational_scenario": {
+    "currency": "EUR",
+    "name": "Base Case",
+    "cost_per_contact": 10,
+    "revenue_per_success": 250,
+    "note": "Illustrative scenario used to compare model-guided outreach decisions; not observed bank economics."
+  }
+}

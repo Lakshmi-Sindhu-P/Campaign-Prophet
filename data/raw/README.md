@@ -1,5 +1,9 @@
-# Raw Data
+# Raw data
 
-This folder contains original ZIP files downloaded from the UCI Bank Marketing dataset source.
+Raw UCI archives are intentionally **not committed** to this repository. To recreate them, run:
 
-These files are kept for reproducibility. The extracted folders are not required because they can be regenerated from the ZIP files.
+```bash
+python3 scripts/prepare_data.py --refresh-data
+```
+
+The script downloads the public UCI archive into a temporary location, rebuilds the tracked processed dataset, and removes the temporary raw files when it finishes.

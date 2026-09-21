@@ -1,0 +1,58 @@
+{
+  "selected_model": "Random Forest",
+  "selection_metric": "average_precision",
+  "selection_split": "internal_source_order_validation",
+  "internal_validation_rule": "Fit on the first 80% of the training period; select on the final 20% of the training period.",
+  "final_holdout_used_for_selection": false,
+  "decision_ranking_score": "uncalibrated",
+  "calibrated_probability_use": "expected_responder_counts_only",
+  "capacity_levels_percent": [
+    5,
+    10,
+    20,
+    30,
+    50
+  ],
+  "capacity_bootstrap_samples": 500,
+  "validation_split": "source_order_temporal_holdout",
+  "source_order_assumption": "Rows are treated as successive campaign observations; explicit timestamps are unavailable.",
+  "feature_policy": {
+    "excluded_features": [
+      "age_group",
+      "campaign",
+      "duration",
+      "duration_category",
+      "success",
+      "y"
+    ],
+    "pre_contact_feature_count": 19,
+    "naive_added_features": [
+      "campaign",
+      "duration"
+    ]
+  },
+  "leakage_demonstration": {
+    "evaluation_split": "random_stratified_benchmark",
+    "artifact": "leakage_comparison.csv"
+  },
+  "calibration": {
+    "method": "isotonic",
+    "fit_split": "out_of_fold_training_predictions",
+    "evaluated_on": "source_order_temporal_holdout",
+    "ranking_spearman_uncalibrated_vs_calibrated": 0.995635,
+    "calibration_acceptable_for_ranking": true,
+    "brier_difference_uncalibrated_minus_isotonic": -0.021498,
+    "brier_difference_ci_low": -0.029643,
+    "brier_difference_ci_high": -0.012853
+  },
+  "operational_scenario": {
+    "currency": "EUR",
+    "name": "Base Case",
+    "cost_per_contact": 10,
+    "revenue_per_success": 250,
+    "note": "Illustrative scenario used to compare model-guided outreach decisions; not observed bank economics."
+  },
+  "xgboost_available": false,
+  "xgboost_import_error": "\nXGBoost Library (libxgboost.dylib) could not be loaded.\nLikely causes:\n  * OpenMP runtime is not installed\n    - vcomp140.dll or libgomp-1.dll for Windows\n    - libomp.dylib for Mac OSX\n    - libgomp.so for Linux and other UNIX-like OSes\n    Mac OSX users: Run `brew install libomp` to install OpenMP runtime.\n\n  * You are running 32-bit Python on a 64-bit OS\n\nError message(s): [\"dlopen(/Users/sindhu/conductor/workspaces/campaign-prophet/kathmandu/.venv/lib/python3.14/site-packages/xgboost/lib/libxgboost.dylib, 0x0006): Library not loaded: @rpath/libomp.dylib\\n  Referenced from: <6984A3F0-3899-36C4-A85D-20B5520FF130> /Users/sindhu/conductor/workspaces/campaign-prophet/kathmandu/.venv/lib/python3.14/site-packages/xgboost/lib/libxgboost.dylib\\n  Reason: tried: '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/homebrew/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libomp.dylib' (no such file), '/opt/homebrew/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libomp.dylib' (no such file)\"]\n",
+  "model_scope": "two-model scope: Logistic Regression and Random Forest"
+}

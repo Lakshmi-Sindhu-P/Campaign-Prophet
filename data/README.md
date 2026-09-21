@@ -1,15 +1,6 @@
-# Data Folder
+# Data
 
-This folder stores raw and processed datasets used in the Campaign Prophet project.
+- `processed/cleaned_feature_engineered_bank_marketing.csv` is the reproducible, tracked analysis input (41,176 deduplicated records).
+- `raw/` contains instructions only; original UCI ZIP files are intentionally excluded from Git.
 
-## raw/
-
-Contains original downloaded ZIP files from the UCI Bank Marketing dataset.
-
-## processed/
-
-Contains cleaned and feature-engineered datasets created during Notebook 01.
-
-The primary processed dataset is:
-
-- cleaned_feature_engineered_bank_marketing.csv
+Run `python3 scripts/prepare_data.py --refresh-data` to download the public source and regenerate the processed file and Notebook 01 handoff artifacts.
