@@ -1,0 +1,10 @@
+feature,kind,train_value,holdout_value,psi
+subscription_rate,target,0.0638,0.3083,
+euribor3m,numeric,4.269,1.0308,12.8072
+nr.employed,numeric,5195.1401,5054.6276,12.501
+pdays,numeric,993.7509,837.3357,0.5673
+cons.conf.idx,numeric,-40.6373,-39.9652,4.3899
+emp.var.rate,numeric,0.6504,-2.1915,12.6701
+month,categorical,may (31.2%),may (42.3%),1.492
+contact,categorical,cellular (57.3%),cellular (88.0%),0.5179
+poutcome,categorical,nonexistent (93.1%),nonexistent (59.3%),0.902

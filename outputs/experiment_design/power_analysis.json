@@ -1,0 +1,88 @@
+{
+  "test": "two_proportion_z_test",
+  "alpha_two_sided": 0.05,
+  "power": 0.8,
+  "holdback_fraction": 0.1,
+  "note": "Design arithmetic only. The historical dataset has no untreated control group, so these sizes describe a future randomized holdback, not the UCI data.",
+  "absolute_lift_scenarios": [
+    {
+      "baseline_rate": 0.1127,
+      "treatment_rate": 0.1227,
+      "absolute_lift_pp": 1.0,
+      "relative_lift_percent": 8.9,
+      "sample_size_per_arm": 16296,
+      "total_records_needed": 32592,
+      "eligible_for_10pct_holdback": 162960
+    },
+    {
+      "baseline_rate": 0.1127,
+      "treatment_rate": 0.1327,
+      "absolute_lift_pp": 2.0,
+      "relative_lift_percent": 17.8,
+      "sample_size_per_arm": 4223,
+      "total_records_needed": 8446,
+      "eligible_for_10pct_holdback": 42230
+    },
+    {
+      "baseline_rate": 0.1127,
+      "treatment_rate": 0.1427,
+      "absolute_lift_pp": 3.0,
+      "relative_lift_percent": 26.6,
+      "sample_size_per_arm": 1942,
+      "total_records_needed": 3884,
+      "eligible_for_10pct_holdback": 19420
+    },
+    {
+      "baseline_rate": 0.1127,
+      "treatment_rate": 0.1627,
+      "absolute_lift_pp": 5.0,
+      "relative_lift_percent": 44.4,
+      "sample_size_per_arm": 745,
+      "total_records_needed": 1490,
+      "eligible_for_10pct_holdback": 7450
+    }
+  ],
+  "relative_lift_scenarios": [
+    {
+      "relative_lift_percent": 10.0,
+      "treatment_rate": 0.1239,
+      "absolute_lift_pp": 1.13,
+      "sample_size_per_arm": 12899,
+      "eligible_for_10pct_holdback": 128990
+    },
+    {
+      "relative_lift_percent": 20.0,
+      "treatment_rate": 0.1352,
+      "absolute_lift_pp": 2.25,
+      "sample_size_per_arm": 3356,
+      "eligible_for_10pct_holdback": 33560
+    },
+    {
+      "relative_lift_percent": 30.0,
+      "treatment_rate": 0.1465,
+      "absolute_lift_pp": 3.38,
+      "sample_size_per_arm": 1549,
+      "eligible_for_10pct_holdback": 15490
+    }
+  ],
+  "minimum_detectable_effect": [
+    {
+      "eligible_records": 8236,
+      "control_arm": 823,
+      "minimum_detectable_absolute_lift_pp": 4.74,
+      "minimum_detectable_treatment_rate": 0.16
+    },
+    {
+      "eligible_records": 42230,
+      "control_arm": 4223,
+      "minimum_detectable_absolute_lift_pp": 2.0,
+      "minimum_detectable_treatment_rate": 0.1327
+    },
+    {
+      "eligible_records": 162960,
+      "control_arm": 16296,
+      "minimum_detectable_absolute_lift_pp": 1.0,
+      "minimum_detectable_treatment_rate": 0.1227
+    }
+  ]
+}
