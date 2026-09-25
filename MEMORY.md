@@ -206,8 +206,9 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   excluded. Rationale: enforce the reproducibility claim without false alarms from cross-platform FP.
 - **2026-09 (CI finding — cross-platform FP)** — The first CI run failed: Linux regenerated
   Random Forest `roc_auc` as **0.8127** vs the committed macOS **0.8126**, an ~1e-4 platform
-  difference that crossed a 4th-decimal boundary. Two fixes: (a) the README-metric contract test
-  now matches published numbers within 2e-4 instead of exact string equality; (b) `check_drift.py`
+  difference that crossed a 4th-decimal boundary (and AP differs by up to ~5e-4). Two fixes:
+  (a) the README-metric contract test now matches published numbers within 1e-3 instead of exact
+  string equality; (b) `check_drift.py`
   was rewritten to structural-exact + numeric-tolerance (floats rtol/atol 3e-2, ints ±3) and to
   skip generated prose/HTML. Consequence: "byte-identical" holds only on one platform; the
   cross-platform guarantee is structural reproducibility within tolerance.
