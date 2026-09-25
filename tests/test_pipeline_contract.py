@@ -55,6 +55,7 @@ def test_generated_artifact_set_is_complete():
         "distribution_shift.csv",
         "feature_importance.csv",
         "tuning_sensitivity.csv",
+        "impact_statement.md",
     }
     produced = {path.name for path in (ROOT / "outputs" / "notebook_02").glob("*")}
     assert expected.issubset(produced)
@@ -66,6 +67,16 @@ def test_model_comparison_is_three_model():
     assert {"Logistic Regression", "Random Forest", "Histogram Gradient Boosting"}.issubset(models)
     selection = json.loads((ROOT / "outputs" / "notebook_02" / "model_selection.json").read_text())
     assert "three-model" in selection["model_scope"]
+
+
+def test_impact_statement_is_generated_and_non_causal():
+    statement = (ROOT / "outputs" / "notebook_02" / "impact_statement.md").read_text()
+    assert "not causal uplift" in statement
+    capacity = pd.read_csv(ROOT / "outputs" / "notebook_02" / "capacity_table.csv")
+    row = capacity[capacity["capacity_percent"] == 10].iloc[0]
+    assert f"{row.coverage_percent:.1f}%" in statement
+    assert f"{row.lift:.2f}" in statement
+    assert "not causal uplift" in (ROOT / "README.md").read_text()
 
 
 def test_tuning_sensitivity_shows_defaults_stand():

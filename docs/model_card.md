@@ -76,6 +76,12 @@ The training-period subscription rate is 6.4% against a holdout rate of
 30.8%. Per-feature population stability indices are published in
 `distribution_shift.csv` and `visuals/distribution_shift.png`.
 
+## Impact framing
+
+On the historical holdout, a 10% contact capacity captures **20.5% of
+responders** at **2.05× a random contact**. This is descriptive, not causal
+uplift: the dataset contains only contacted customers and has no control group.
+
 ## Decision status
 
 Isotonic calibration preserves ranking on the source-order holdout but does not improve the Brier

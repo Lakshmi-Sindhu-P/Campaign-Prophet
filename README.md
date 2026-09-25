@@ -9,7 +9,7 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-16_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-17_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -266,6 +266,8 @@ Intervals are paired bootstrap **95% CIs**; the p-value is a one-sided binomial 
 precision@K against the holdout base rate. This is a relative coverage/lift description,
 **not a financial targeting recommendation**.
 
+> **Impact:** at 10% contact capacity the model captures **20.5% of responders** at **2.05× a random contact** — descriptive, not causal uplift: the dataset contains only contacted customers and has no control group.
+
 <br/>
 
 | Capacity | Contacts | Responders | Coverage % (95% CI) | Precision@K | Lift (95% CI) | p vs base |
@@ -411,6 +413,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 6 — Randomised-holdback experiment design + power analysis
 - [x] Phase 7.3 — Three-model comparison incl. Histogram Gradient Boosting + permutation importance
 - [x] Phase 7.6 — Bounded hyperparameter sensitivity (defaults stand)
+- [x] Phase 7.5 — Generated, non-causal impact statement
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---

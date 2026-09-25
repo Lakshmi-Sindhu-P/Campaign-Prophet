@@ -231,6 +231,18 @@ def build_capacity_table(scored: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def write_impact_statement(capacity: pd.DataFrame) -> str:
+    """One honest impact sentence, generated from the capacity table."""
+    row = capacity[capacity["capacity_percent"] == 10].iloc[0]
+    statement = (
+        f"On the historical holdout, a 10% contact capacity captures **{row.coverage_percent:.1f}% of "
+        f"responders** at **{row.lift:.2f}× a random contact**. This is descriptive, not causal uplift: "
+        "the dataset contains only contacted customers and has no control group.\n"
+    )
+    (OUTPUT_DIR / "impact_statement.md").write_text(statement, encoding="utf-8")
+    return statement
+
+
 def build_capacity_by_model(y_test: pd.Series, probabilities: dict[str, np.ndarray]) -> pd.DataFrame:
     """Operational model comparison at each capacity (does the AUC edge buy responders?)."""
     y = y_test.to_numpy()
@@ -541,6 +553,7 @@ def write_model_card(
     top_features = ", ".join(
         f"`{row.feature}` ({row.importance_mean:.3f})" for row in feature_importance.head(5).itertuples()
     )
+    capacity_10 = capacity[capacity["capacity_percent"] == 10].iloc[0]
     card = f"""# Campaign Prophet model card
 
 ## Purpose
@@ -614,6 +627,12 @@ See `feature_importance.csv` and `visuals/feature_importance.png`.
 The training-period subscription rate is {base_rate['train_value']:.1%} against a holdout rate of
 {base_rate['holdout_value']:.1%}. Per-feature population stability indices are published in
 `distribution_shift.csv` and `visuals/distribution_shift.png`.
+
+## Impact framing
+
+On the historical holdout, a 10% contact capacity captures **{capacity_10['coverage_percent']:.1f}% of
+responders** at **{capacity_10['lift']:.2f}× a random contact**. This is descriptive, not causal
+uplift: the dataset contains only contacted customers and has no control group.
 
 ## Decision status
 
@@ -754,6 +773,7 @@ def main() -> None:
 
     capacity = build_capacity_table(scored)
     capacity.to_csv(OUTPUT_DIR / "capacity_table.csv", index=False)
+    impact_statement = write_impact_statement(capacity)
     capacity_by_model = build_capacity_by_model(y_temporal_test, temporal_probabilities)
     capacity_by_model.to_csv(OUTPUT_DIR / "capacity_table_by_model.csv", index=False)
 

@@ -35,7 +35,8 @@ them. It is a portfolio analysis, not a production banking system.
 **Artifacts (`outputs/notebook_02/`).** `model_metrics.csv`, `validation_metrics.csv`,
 `leakage_comparison.csv`, `calibration_metrics.csv`, `distribution_shift.csv`,
 `scored_temporal_holdout.csv`, `capacity_table.csv`, `capacity_table_by_model.csv`,
-`cumulative_gains.csv`, `feature_importance.csv`, `model_selection.json`.
+`cumulative_gains.csv`, `feature_importance.csv`, `tuning_sensitivity.csv`,
+`impact_statement.md`, `model_selection.json`.
 
 **Model scope.** Three canonical models: Logistic Regression, Random Forest, and
 Histogram Gradient Boosting (sklearn). Random Forest is operational (selected on the internal
@@ -177,6 +178,9 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.5)** — Added a generated `impact_statement.md` (top-10% coverage/lift),
+  surfaced in README and model card and pinned by a contract test. Framed descriptively, never
+  causally — no control group exists, so no uplift claim is ever made.
 - **2026-09 (Phase 7.6)** — Added a bounded hyperparameter sensitivity study
   (`scripts/tune_sensitivity.py`) scored on the internal validation slice only. Measured result:
   best RF config improves validation AP by only **+0.0009**; best HGB config (+0.0136) still
