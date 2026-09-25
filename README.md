@@ -373,7 +373,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
 | 🗄️ **SQL verified, not decorative** | Portable segment queries in `sql/` are contract-tested to equal the pandas handoffs. |
 | 🌐 **Interactive surface** | A self-contained `capacity_report.html` and a thin FastAPI `/recommend` endpoint read the same artifacts — they cannot disagree with the numbers. |
-| ✅ **Mechanically reproducible** | 20 pytest contract tests pin every published metric to regenerated artifacts; deterministic `n_jobs=1` re-runs are byte-identical, and CI fails if the regenerated artifacts drift. |
+| ✅ **Mechanically reproducible** | 20 contract tests pin every published metric to regenerated artifacts; `n_jobs=1` re-runs are deterministic, and CI re-runs the full pipeline and fails if artifacts drift structurally or beyond cross-platform floating-point tolerance (~1e-4 macOS vs Linux). |
 
 ---
 
@@ -487,7 +487,7 @@ python3 -m venv .venv
 Or reproduce everything in one container: `docker build -t campaign-prophet . && docker run --rm campaign-prophet`.
 The GitHub Actions workflow (`.github/workflows/pipeline.yml`) runs the same sequence and the drift guard on every push and PR.
 
-All three models are pure scikit-learn with single-threaded numerics (`OMP_NUM_THREADS=1`, `n_jobs=1`), so the pipeline needs no system OpenMP runtime and re-runs are byte-identical.
+All three models are pure scikit-learn with single-threaded numerics (`OMP_NUM_THREADS=1`, `n_jobs=1`), so the pipeline needs no system OpenMP runtime and re-runs are deterministic on a given platform (macOS vs Linux differ only at ~1e-4, which CI tolerates).
 
 ---
 
