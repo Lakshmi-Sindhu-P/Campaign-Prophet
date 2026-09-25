@@ -9,7 +9,7 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-19_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-20_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -371,6 +371,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 🎯 **Capacity, not currency** | Recommendations are coverage/lift at a percent-of-population capacity, so they cannot saturate like a € budget. |
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
 | 🗄️ **SQL verified, not decorative** | Portable segment queries in `sql/` are contract-tested to equal the pandas handoffs. |
+| 🌐 **Interactive surface** | A self-contained `capacity_report.html` and a thin FastAPI `/recommend` endpoint read the same artifacts — they cannot disagree with the numbers. |
 | ✅ **Mechanically reproducible** | 18 pytest contract tests pin every published metric to regenerated artifacts, and deterministic `n_jobs=1` re-runs are byte-identical. |
 
 ---
@@ -387,6 +388,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 ├── 📊 outputs/
 │   ├── notebook_01/         ← descriptive + scenario handoff tables
 │   ├── notebook_02/         ← model, leakage, calibration, shift, capacity artifacts
+│   ├── report/              ← self-contained capacity_report.html
 │   └── experiment_design/   ← power_analysis.json
 │
 ├── 📁 data/
@@ -396,7 +398,8 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 ├── 🖼️  visuals/              ← generated evaluation charts + banner
 ├── 📚 docs/                 ← data dictionary, model card, experiment design
 ├── 🗄️  sql/                  ← portable segment queries (verified against pandas)
-├── 🛠️  scripts/              ← prepare_data · run_modeling · run_sql · tune_sensitivity · recommend · experiment_power
+├── 🌐 app/                   ← thin FastAPI endpoint over the artifacts
+├── 🛠️  scripts/              ← prepare_data · run_modeling · run_sql · tune_sensitivity · recommend · build_report · experiment_power
 ├── 🧪 tests/                ← pipeline contract checks
 ├── ⚙️  config/               ← roi_scenarios.json
 ├── MEMORY.md               ← project memory (architecture · facts · decisions)
@@ -432,6 +435,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 7.5 — Generated, non-causal impact statement
 - [x] Phase 7.4 — SQL analyst layer (verified equal to pandas handoffs)
 - [x] Phase 7.7 — Subgroup error analysis (descriptive, no fairness certification)
+- [x] Phase 7.1 — Self-contained capacity report + optional FastAPI endpoint
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---
@@ -457,9 +461,16 @@ python3 -m venv .venv
 # Bounded hyperparameter sensitivity on the internal validation slice.
 .venv/bin/python scripts/tune_sensitivity.py
 
+# Self-contained HTML capacity report.
+.venv/bin/python scripts/build_report.py
+
 # Capacity recommendation + reproducible experiment power arithmetic.
 .venv/bin/python scripts/recommend.py --capacity 20
 .venv/bin/python scripts/experiment_power.py
+
+# Optional read-only API (install serving extras first).
+# .venv/bin/python -m pip install -r requirements-serve.txt
+# .venv/bin/uvicorn app.main:app --reload
 
 # Verify the data, artifact, and decision-layer contracts.
 .venv/bin/python -m pytest

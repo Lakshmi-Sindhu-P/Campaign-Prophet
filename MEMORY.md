@@ -29,9 +29,11 @@ them. It is a portfolio analysis, not a production banking system.
    model card, and `model_selection.json`.
 4. `scripts/tune_sensitivity.py` — bounded hyperparameter sensitivity on the validation slice.
 5. `scripts/recommend.py --capacity N` — decision-time capacity recommendation CLI.
-6. `scripts/experiment_power.py` — reproducible power / minimum-detectable-effect design.
-7. `tests/test_pipeline_contract.py` — contract tests pinning data, artifacts, decision-layer,
-   calibration, power, SQL-parity, and impact outputs.
+6. `scripts/build_report.py` — self-contained HTML capacity report; `app/main.py` exposes the
+   same summary over HTTP (optional).
+7. `scripts/experiment_power.py` — reproducible power / minimum-detectable-effect design.
+8. `tests/test_pipeline_contract.py` — contract tests pinning data, artifacts, decision-layer,
+   calibration, power, SQL-parity, report parity, and impact outputs.
 
 **Data flow.** `data/processed/cleaned_feature_engineered_bank_marketing.csv` (tracked input)
 → `run_modeling.py` → `outputs/notebook_02/*` + `visuals/*` + `docs/model_card.md`.
@@ -61,7 +63,9 @@ notebooks/         01_... (prepare_data), 02_... (run_modeling) thin runpy wrapp
 outputs/notebook_01/  Notebook 01 handoff tables
 outputs/notebook_02/  model / leakage / calibration / shift / capacity artifacts
 outputs/experiment_design/  power_analysis.json
-scripts/           prepare_data.py, run_sql.py, run_modeling.py, tune_sensitivity.py, recommend.py, experiment_power.py
+outputs/report/    capacity_report.html (self-contained)
+app/               main.py (thin FastAPI /recommend endpoint; optional)
+scripts/           prepare_data.py, run_sql.py, run_modeling.py, tune_sensitivity.py, recommend.py, build_report.py, experiment_power.py
 sql/               portable segment queries (expected_value, job/poutcome crosstabs)
 tests/             test_pipeline_contract.py
 visuals/           generated evaluation charts
@@ -108,6 +112,7 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
 .venv/bin/python scripts/run_sql.py
 .venv/bin/python scripts/run_modeling.py
 .venv/bin/python scripts/tune_sensitivity.py
+.venv/bin/python scripts/build_report.py
 .venv/bin/python scripts/recommend.py --capacity 20
 .venv/bin/python scripts/experiment_power.py
 .venv/bin/python -m pytest
@@ -184,6 +189,10 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.1)** — Added a self-contained `outputs/report/capacity_report.html`
+  (`scripts/build_report.py`, embedded charts/tables, no server) and a thin optional FastAPI
+  `app/main.py` `/recommend` endpoint reusing `recommend.summarize`. Both read the artifacts, so
+  they cannot disagree with published numbers. Serving deps isolated in `requirements-serve.txt`.
 - **2026-09 (Phase 7.7)** — Added a descriptive subgroup error analysis at top-20% capacity
   (`subgroup_errors.csv`, `visuals/subgroup_errors.png`) over age band, job, and marital status.
   Explicitly **not** a fairness certification and caveated by drift; records where the policy

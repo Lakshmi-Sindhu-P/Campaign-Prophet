@@ -70,6 +70,29 @@ def test_model_comparison_is_three_model():
     assert "three-model" in selection["model_scope"]
 
 
+def test_report_and_api_logic_match_artifacts():
+    import sys
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import recommend
+
+    report_path = ROOT / "outputs" / "report" / "capacity_report.html"
+    assert report_path.exists()
+    report = report_path.read_text()
+    assert "not causal uplift" in report
+    impact = (ROOT / "outputs" / "notebook_02" / "impact_statement.md").read_text().strip()
+    assert impact.split(". ")[0] in report
+
+    capacity = pd.read_csv(ROOT / "outputs" / "notebook_02" / "capacity_table.csv")
+    row = capacity[capacity["capacity_percent"] == 20].iloc[0]
+
+    scored, _ = recommend.load_artifacts()
+    summary = recommend.summarize(scored, 20)
+    assert int(summary["contacts"]) == int(row.contacts)
+    assert abs(summary["lift"] - row.lift) < 1e-9
+    assert (ROOT / "app" / "main.py").exists()
+
+
 def test_subgroup_error_analysis_is_descriptive():
     subgroups = pd.read_csv(ROOT / "outputs" / "notebook_02" / "subgroup_errors.csv")
     assert set(subgroups["dimension"]) == {"age_group", "job", "marital"}
