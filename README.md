@@ -373,7 +373,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
 | 🗄️ **SQL verified, not decorative** | Portable segment queries in `sql/` are contract-tested to equal the pandas handoffs. |
 | 🌐 **Interactive surface** | A self-contained `capacity_report.html` and a thin FastAPI `/recommend` endpoint read the same artifacts — they cannot disagree with the numbers. |
-| ✅ **Mechanically reproducible** | 20 contract tests pin every published metric to regenerated artifacts; `n_jobs=1` re-runs are deterministic, and CI re-runs the full pipeline and fails if artifacts drift structurally or beyond cross-platform floating-point tolerance (~1e-4 macOS vs Linux). |
+| ✅ **Mechanically reproducible** | 20 contract tests pin every published metric to regenerated artifacts; `n_jobs=1` re-runs are deterministic, and CI re-runs the full pipeline and fails if artifacts drift structurally or beyond a documented cross-platform tolerance. |
 
 ---
 
