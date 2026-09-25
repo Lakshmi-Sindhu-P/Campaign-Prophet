@@ -332,7 +332,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 📐 **Calibration gate** | Calibrators are tested for transfer and reported unfit under shift — instead of shipping a misleading probability. |
 | 🎯 **Capacity, not currency** | Recommendations are coverage/lift at a percent-of-population capacity, so they cannot saturate like a € budget. |
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
-| ✅ **Mechanically reproducible** | 13 pytest contract tests pin every published metric to regenerated artifacts. |
+| ✅ **Mechanically reproducible** | 13 pytest contract tests pin every published metric to regenerated artifacts, and deterministic `n_jobs=1` re-runs are byte-identical. |
 
 ---
 

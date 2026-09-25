@@ -98,7 +98,9 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
 
 **Conventions.**
 - Deterministic: `RANDOM_STATE = 42` everywhere; `np.random.default_rng(RANDOM_STATE)` for
-  bootstraps. No wall-clock or unseeded randomness.
+  bootstraps. No wall-clock or unseeded randomness. Estimators run with `n_jobs=1` (no
+  parallel FP reduction order) so two consecutive runs of `run_modeling.py` produce
+  byte-identical artifacts — verified before the "mechanically reproducible" claim.
 - Standalone scripts with `main()` and module-level path constants; write to explicit
   `outputs/` / `visuals/` directories (created with `mkdir(parents=True, exist_ok=True)`).
 - **Rank on uncalibrated scores.** Calibrated probabilities are only for expected-responder
@@ -158,3 +160,9 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   (RF buys only ~7 extra responders at top-10% vs LR), and minimum-detectable-effect to the
   power analysis. Rationale: point estimates alone invite overclaiming; uncertainty is the
   honest interview-grade evidence.
+- **2026-09 (reproducibility hardening)** — Set `n_jobs=1` on all estimators and
+  `cross_val_predict` so re-runs are byte-identical. A verification re-run exposed last-digit
+  floating-point drift (threaded reduction order) in the scored holdout, capacity, and
+  calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
+  float values should be deterministic, not just equal to displayed precision. No published
+  metric changed.

@@ -113,7 +113,7 @@ def model_factories(positive_weight: float):
             min_samples_split=20,
             min_samples_leaf=10,
             class_weight="balanced",
-            n_jobs=-1,
+            n_jobs=1,
             random_state=RANDOM_STATE,
         ),
     }
@@ -128,7 +128,7 @@ def model_factories(positive_weight: float):
             objective="binary:logistic",
             eval_metric="logloss",
             random_state=RANDOM_STATE,
-            n_jobs=-1,
+            n_jobs=1,
         )
     return factories
 
@@ -661,7 +661,7 @@ def main() -> None:
         y_temporal_train,
         cv=folds,
         method="predict_proba",
-        n_jobs=-1,
+        n_jobs=1,
     )[:, 1]
     isotonic = IsotonicRegression(out_of_bounds="clip").fit(out_of_fold, y_temporal_train)
     isotonic_prediction = isotonic.predict(uncalibrated)
