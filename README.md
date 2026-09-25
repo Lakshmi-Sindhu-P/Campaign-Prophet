@@ -9,7 +9,8 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-13_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-20_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Pipeline](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet/actions/workflows/pipeline.yml)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -136,11 +137,29 @@ Models are selected by Average Precision on an **internal validation slice of th
 | Model | Benchmark ROC-AUC | Benchmark AP | Holdout ROC-AUC | Holdout AP |
 |:------|------------------:|-------------:|----------------:|-----------:|
 | 🥇 🌲 **Random Forest** `operational` | **0.8126** | **0.4822** | **0.7180** | **0.5151** |
-| 🥉 📐 Logistic Regression `baseline` | 0.8009 | 0.4439 | 0.6953 | 0.5017 |
+| 🌳 **Histogram Gradient Boosting** `boosting` | 0.8047 | 0.4759 | 0.5990 | 0.4059 |
+| 📐 **Logistic Regression** `baseline` | 0.8009 | 0.4439 | 0.6953 | 0.5017 |
 
 <br/>
 
-**Random Forest** leads on ranking quality and is the operational model. The pipeline runs a formally scoped **two-model comparison**; XGBoost is wired but gated on the macOS OpenMP runtime (`libomp`) and was **not** included in these results.
+**Random Forest** leads on ranking quality and is the operational model, selected on the internal validation slice. The pipeline runs a **three-model comparison** — Logistic Regression, Random Forest, and Histogram Gradient Boosting. All three are pure scikit-learn, so there is **no system OpenMP dependency** and the pipeline is reproducible across platforms and CI.
+
+<details>
+<summary>🎛️ &nbsp;<b>Hyperparameter sensitivity: defaults stand (measured, not asserted)</b></summary>
+
+<br/>
+
+A small grid per model is scored on the **internal validation slice only** (the final holdout is never used for tuning). The best config per model:
+
+| Model | Best config | Validation AP | Default AP | Δ |
+|:------|:------------|--------------:|-----------:|--:|
+| Random Forest | `trees200` | 0.1693 | 0.1684 | +0.0009 |
+| Histogram Gradient Boosting | `small` | 0.1619 | 0.1483 | +0.0136 |
+| Logistic Regression | `C0.1` | 0.1353 | 0.1344 | +0.0009 |
+
+No config materially improves validation ranking, and tuned HGB still trails untuned Random Forest — so the shipped defaults stand. Full grid in `outputs/notebook_02/tuning_sensitivity.csv`. This is the evidence behind "no tuning", not a claim.
+
+</details>
 
 <details>
 <summary>🔓 &nbsp;<b>The leakage cost, measured (not asserted)</b></summary>
@@ -152,6 +171,7 @@ A naive model allowed to use `duration` and `campaign` is trained on the **same*
 | Model | Pre-contact ROC-AUC | Naive full-information | Paired gap (95% CI) | Top-decile lift |
 |:------|--------------------:|-----------------------:|:-------------------:|:---------------:|
 | 🌲 Random Forest | 0.8126 | **0.9480** | **+0.1352** (0.121–0.150) | 4.66× → 5.60× |
+| 🌳 Histogram Gradient Boosting | 0.8047 | **0.9510** | **+0.1459** (0.131–0.162) | 4.74× → 5.72× |
 | 📐 Logistic Regression | 0.8009 | **0.9403** | **+0.1390** (0.121–0.155) | 4.46× → 5.43× |
 
 That ~13.5-point gap is exactly the value a leaky model would have captured — and exactly why it cannot be used operationally.
@@ -238,6 +258,19 @@ scores. Calibration is kept only as a diagnostic — and honestly reported as un
 
 </details>
 
+<details>
+<summary>🧍 &nbsp;<b>Subgroup error analysis (descriptive, not a fairness certification)</b></summary>
+
+<br/>
+
+At top-20% capacity, responder recall varies across subgroups — e.g. by age band
+(`25-35` 37%, `65+` 44%) and job (`blue-collar` 19%, `retired` 50%). This is a descriptive
+error breakdown to expose where the policy under-serves, caveated by the drift regime and the
+absence of a control group. It is **not** a fairness audit. Full table in
+`outputs/notebook_02/subgroup_errors.csv`, chart in `visuals/subgroup_errors.png`.
+
+</details>
+
 ---
 
 ## 🎯 Targeting Results
@@ -246,6 +279,8 @@ Capacity is framed as a **percent of the eligible population**, not a currency b
 Intervals are paired bootstrap **95% CIs**; the p-value is a one-sided binomial test of
 precision@K against the holdout base rate. This is a relative coverage/lift description,
 **not a financial targeting recommendation**.
+
+> **Impact:** at 10% contact capacity the model captures **20.5% of responders** at **2.05× a random contact** — descriptive, not causal uplift: the dataset contains only contacted customers and has no control group.
 
 <br/>
 
@@ -318,7 +353,11 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 </p>
 <p align="center">
   <img src="visuals/calibration_curve.png" width="49%"/>
+  <img src="visuals/feature_importance.png" width="49%"/>
+</p>
+<p align="center">
   <img src="visuals/cumulative_gains.png" width="49%"/>
+  <img src="visuals/subgroup_errors.png" width="49%"/>
 </p>
 
 ---
@@ -332,7 +371,9 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 📐 **Calibration gate** | Calibrators are tested for transfer and reported unfit under shift — instead of shipping a misleading probability. |
 | 🎯 **Capacity, not currency** | Recommendations are coverage/lift at a percent-of-population capacity, so they cannot saturate like a € budget. |
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
-| ✅ **Mechanically reproducible** | 13 pytest contract tests pin every published metric to regenerated artifacts. |
+| 🗄️ **SQL verified, not decorative** | Portable segment queries in `sql/` are contract-tested to equal the pandas handoffs. |
+| 🌐 **Interactive surface** | A self-contained `capacity_report.html` and a thin FastAPI `/recommend` endpoint read the same artifacts — they cannot disagree with the numbers. |
+| ✅ **Mechanically reproducible** | 20 contract tests pin every published metric to regenerated artifacts; `n_jobs=1` re-runs are deterministic, and CI re-runs the full pipeline and fails if artifacts drift structurally or beyond a documented cross-platform tolerance. |
 
 ---
 
@@ -348,6 +389,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 ├── 📊 outputs/
 │   ├── notebook_01/         ← descriptive + scenario handoff tables
 │   ├── notebook_02/         ← model, leakage, calibration, shift, capacity artifacts
+│   ├── report/              ← self-contained capacity_report.html
 │   └── experiment_design/   ← power_analysis.json
 │
 ├── 📁 data/
@@ -356,9 +398,13 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 │
 ├── 🖼️  visuals/              ← generated evaluation charts + banner
 ├── 📚 docs/                 ← data dictionary, model card, experiment design
-├── 🛠️  scripts/              ← prepare_data · run_modeling · recommend · experiment_power
+├── 🗄️  sql/                  ← portable segment queries (verified against pandas)
+├── 🌐 app/                   ← thin FastAPI endpoint over the artifacts
+├── 🛠️  scripts/              ← prepare_data · run_modeling · run_sql · tune_sensitivity · recommend · build_report · experiment_power · check_drift
 ├── 🧪 tests/                ← pipeline contract checks
 ├── ⚙️  config/               ← roi_scenarios.json
+├── 🐳 Dockerfile            ← one-command reproduction
+├── 🔁 .github/workflows/    ← CI: full pipeline + artifact drift guard
 ├── MEMORY.md               ← project memory (architecture · facts · decisions)
 ├── AGENTS.md               ← agent memory protocol
 ├── requirements.txt
@@ -387,7 +433,14 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 4 — Capacity policy + narrative re-center
 - [x] Phase 5 — Capacity recommendation CLI
 - [x] Phase 6 — Randomised-holdback experiment design + power analysis
-- [ ] Optional — XGBoost three-model comparison (requires `brew install libomp`)
+- [x] Phase 7.3 — Three-model comparison incl. Histogram Gradient Boosting + permutation importance
+- [x] Phase 7.6 — Bounded hyperparameter sensitivity (defaults stand)
+- [x] Phase 7.5 — Generated, non-causal impact statement
+- [x] Phase 7.4 — SQL analyst layer (verified equal to pandas handoffs)
+- [x] Phase 7.7 — Subgroup error analysis (descriptive, no fairness certification)
+- [x] Phase 7.1 — Self-contained capacity report + optional FastAPI endpoint
+- [x] Phase 7.8 — Dockerfile + monitoring design (`docs/monitoring.md`)
+- [x] Phase 7.2 — CI with tolerance-aware artifact drift guard
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---
@@ -407,15 +460,34 @@ python3 -m venv .venv
 # Train, validate, calibrate, quantify shift, and create decision artifacts.
 .venv/bin/python scripts/run_modeling.py
 
+# SQL analyst layer — verifies portable SQL equals the pandas handoffs.
+.venv/bin/python scripts/run_sql.py
+
+# Bounded hyperparameter sensitivity on the internal validation slice.
+.venv/bin/python scripts/tune_sensitivity.py
+
+# Self-contained HTML capacity report.
+.venv/bin/python scripts/build_report.py
+
 # Capacity recommendation + reproducible experiment power arithmetic.
 .venv/bin/python scripts/recommend.py --capacity 20
 .venv/bin/python scripts/experiment_power.py
 
+# Optional read-only API (install serving extras first).
+# .venv/bin/python -m pip install -r requirements-serve.txt
+# .venv/bin/uvicorn app.main:app --reload
+
 # Verify the data, artifact, and decision-layer contracts.
 .venv/bin/python -m pytest
+
+# Fail if regenerated artifacts drift from the committed ones (also run in CI).
+.venv/bin/python scripts/check_drift.py
 ```
 
-On macOS, XGBoost requires the OpenMP runtime (`brew install libomp`). Without it the pipeline runs a formally scoped **two-model comparison**.
+Or reproduce everything in one container: `docker build -t campaign-prophet . && docker run --rm campaign-prophet`.
+The GitHub Actions workflow (`.github/workflows/pipeline.yml`) runs the same sequence and the drift guard on every push and PR.
+
+All three models are pure scikit-learn with single-threaded numerics (`OMP_NUM_THREADS=1`, `n_jobs=1`), so the pipeline needs no system OpenMP runtime and re-runs are deterministic on a given platform (macOS vs Linux differ only at ~1e-4, which CI tolerates).
 
 ---
 

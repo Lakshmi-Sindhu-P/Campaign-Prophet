@@ -1,0 +1,1 @@
+On the historical holdout, a 10% contact capacity captures **20.5% of responders** at **2.05× a random contact**. This is descriptive, not causal uplift: the dataset contains only contacted customers and has no control group.

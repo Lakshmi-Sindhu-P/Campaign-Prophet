@@ -52,7 +52,18 @@
     "revenue_per_success": 250,
     "note": "Illustrative scenario used to compare model-guided outreach decisions; not observed bank economics."
   },
-  "xgboost_available": false,
-  "xgboost_import_error": "\nXGBoost Library (libxgboost.dylib) could not be loaded.\nLikely causes:\n  * OpenMP runtime is not installed\n    - vcomp140.dll or libgomp-1.dll for Windows\n    - libomp.dylib for Mac OSX\n    - libgomp.so for Linux and other UNIX-like OSes\n    Mac OSX users: Run `brew install libomp` to install OpenMP runtime.\n\n  * You are running 32-bit Python on a 64-bit OS\n\nError message(s): [\"dlopen(/Users/sindhu/conductor/workspaces/campaign-prophet/kathmandu/.venv/lib/python3.14/site-packages/xgboost/lib/libxgboost.dylib, 0x0006): Library not loaded: @rpath/libomp.dylib\\n  Referenced from: <6984A3F0-3899-36C4-A85D-20B5520FF130> /Users/sindhu/conductor/workspaces/campaign-prophet/kathmandu/.venv/lib/python3.14/site-packages/xgboost/lib/libxgboost.dylib\\n  Reason: tried: '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/homebrew/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libomp.dylib' (no such file), '/opt/homebrew/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libomp.dylib' (no such file)\"]\n",
-  "model_scope": "two-model scope: Logistic Regression and Random Forest"
+  "model_scope": "three-model comparison: Logistic Regression, Random Forest, Histogram Gradient Boosting",
+  "permutation_importance": {
+    "scope": "predictive_association_only",
+    "evaluated_on": "source_order_temporal_holdout"
+  },
+  "subgroup_analysis": {
+    "capacity_percent": 20,
+    "dimensions": [
+      "age_group",
+      "job",
+      "marital"
+    ],
+    "scope": "descriptive_error_analysis_no_fairness_certification"
+  }
 }
