@@ -9,7 +9,7 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-13_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-15_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -136,11 +136,12 @@ Models are selected by Average Precision on an **internal validation slice of th
 | Model | Benchmark ROC-AUC | Benchmark AP | Holdout ROC-AUC | Holdout AP |
 |:------|------------------:|-------------:|----------------:|-----------:|
 | 🥇 🌲 **Random Forest** `operational` | **0.8126** | **0.4822** | **0.7180** | **0.5151** |
-| 🥉 📐 Logistic Regression `baseline` | 0.8009 | 0.4439 | 0.6953 | 0.5017 |
+| 🌳 **Histogram Gradient Boosting** `boosting` | 0.8047 | 0.4759 | 0.5990 | 0.4059 |
+| 📐 **Logistic Regression** `baseline` | 0.8009 | 0.4439 | 0.6953 | 0.5017 |
 
 <br/>
 
-**Random Forest** leads on ranking quality and is the operational model. The pipeline runs a formally scoped **two-model comparison**; XGBoost is wired but gated on the macOS OpenMP runtime (`libomp`) and was **not** included in these results.
+**Random Forest** leads on ranking quality and is the operational model, selected on the internal validation slice. The pipeline runs a **three-model comparison** — Logistic Regression, Random Forest, and Histogram Gradient Boosting. All three are pure scikit-learn, so there is **no system OpenMP dependency** and the pipeline is reproducible across platforms and CI.
 
 <details>
 <summary>🔓 &nbsp;<b>The leakage cost, measured (not asserted)</b></summary>
@@ -152,6 +153,7 @@ A naive model allowed to use `duration` and `campaign` is trained on the **same*
 | Model | Pre-contact ROC-AUC | Naive full-information | Paired gap (95% CI) | Top-decile lift |
 |:------|--------------------:|-----------------------:|:-------------------:|:---------------:|
 | 🌲 Random Forest | 0.8126 | **0.9480** | **+0.1352** (0.121–0.150) | 4.66× → 5.60× |
+| 🌳 Histogram Gradient Boosting | 0.8047 | **0.9510** | **+0.1459** (0.131–0.162) | 4.74× → 5.72× |
 | 📐 Logistic Regression | 0.8009 | **0.9403** | **+0.1390** (0.121–0.155) | 4.46× → 5.43× |
 
 That ~13.5-point gap is exactly the value a leaky model would have captured — and exactly why it cannot be used operationally.
@@ -318,6 +320,9 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 </p>
 <p align="center">
   <img src="visuals/calibration_curve.png" width="49%"/>
+  <img src="visuals/feature_importance.png" width="49%"/>
+</p>
+<p align="center">
   <img src="visuals/cumulative_gains.png" width="49%"/>
 </p>
 
@@ -387,7 +392,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 4 — Capacity policy + narrative re-center
 - [x] Phase 5 — Capacity recommendation CLI
 - [x] Phase 6 — Randomised-holdback experiment design + power analysis
-- [ ] Optional — XGBoost three-model comparison (requires `brew install libomp`)
+- [x] Phase 7.3 — Three-model comparison incl. Histogram Gradient Boosting + permutation importance
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---
@@ -415,7 +420,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest
 ```
 
-On macOS, XGBoost requires the OpenMP runtime (`brew install libomp`). Without it the pipeline runs a formally scoped **two-model comparison**.
+All three models are pure scikit-learn with single-threaded numerics (`OMP_NUM_THREADS=1`, `n_jobs=1`), so the pipeline needs no system OpenMP runtime and re-runs are byte-identical.
 
 ---
 

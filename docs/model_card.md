@@ -64,6 +64,12 @@ bootstrap gap is **+0.1352** (+0.1211, +0.1503). That is the
 measured operational cost of the decision-time feature policy. See `leakage_comparison.csv` and
 `visuals/leakage_comparison.png`.
 
+## Feature importance (predictive)
+
+Permutation importance on the temporal holdout (drop in average precision) ranks
+`poutcome` (0.078), `pdays` (0.045), `month` (0.038), `contact` (0.007), `default` (0.006). This is a predictive-association measure, **not a causal effect**.
+See `feature_importance.csv` and `visuals/feature_importance.png`.
+
 ## Distribution shift
 
 The training-period subscription rate is 6.4% against a holdout rate of

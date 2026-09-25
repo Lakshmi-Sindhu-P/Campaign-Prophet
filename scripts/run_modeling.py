@@ -17,6 +17,15 @@ Decision-layer contract:
 
 from __future__ import annotations
 
+import os
+
+# Pin single-threaded numerics before sklearn/numpy import so histogram and BLAS
+# reductions are byte-identical across runs (required by the CI drift guard).
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+
 import json
 from pathlib import Path
 
@@ -25,8 +34,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binomtest, spearmanr
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.inspection import permutation_importance
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -43,13 +53,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from sklearn.calibration import calibration_curve
-
-try:
-    from xgboost import XGBClassifier
-    XGBOOST_IMPORT_ERROR = None
-except Exception as exc:  # pragma: no cover - platform prerequisite is environment-specific
-    XGBClassifier = None
-    XGBOOST_IMPORT_ERROR = str(exc)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -117,19 +120,14 @@ def model_factories(positive_weight: float):
             random_state=RANDOM_STATE,
         ),
     }
-    if XGBClassifier is not None:
-        factories["XGBoost"] = lambda: XGBClassifier(
-            n_estimators=300,
-            max_depth=4,
-            learning_rate=0.05,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            scale_pos_weight=positive_weight,
-            objective="binary:logistic",
-            eval_metric="logloss",
-            random_state=RANDOM_STATE,
-            n_jobs=1,
-        )
+    factories["Histogram Gradient Boosting"] = lambda: HistGradientBoostingClassifier(
+        max_iter=300,
+        learning_rate=0.05,
+        max_leaf_nodes=31,
+        l2_regularization=0.0,
+        early_stopping=False,
+        random_state=RANDOM_STATE,
+    )
     return factories
 
 
@@ -254,6 +252,27 @@ def build_capacity_by_model(y_test: pd.Series, probabilities: dict[str, np.ndarr
                 }
             )
     return pd.DataFrame(rows)
+
+
+def build_feature_importance(pipeline: Pipeline, x_test: pd.DataFrame, y_test: pd.Series) -> pd.DataFrame:
+    """Permutation importance on the holdout — predictive association, not causation."""
+    result = permutation_importance(
+        pipeline,
+        x_test,
+        y_test,
+        scoring="average_precision",
+        n_repeats=5,
+        random_state=RANDOM_STATE,
+        n_jobs=1,
+    )
+    frame = pd.DataFrame(
+        {
+            "feature": list(x_test.columns),
+            "importance_mean": result.importances_mean,
+            "importance_std": result.importances_std,
+        }
+    )
+    return frame.sort_values("importance_mean", ascending=False, kind="stable").reset_index(drop=True)
 
 
 def expected_calibration_error(y_true: np.ndarray, probabilities: np.ndarray, n_bins: int = 10) -> float:
@@ -416,6 +435,7 @@ def make_visuals(
     cumulative_gains: pd.DataFrame,
     capacity_by_model: pd.DataFrame,
     leakage: pd.DataFrame,
+    feature_importance: pd.DataFrame,
     shift: pd.DataFrame,
 ) -> None:
     VISUAL_DIR.mkdir(parents=True, exist_ok=True)
@@ -473,6 +493,14 @@ def make_visuals(
     fig.savefig(VISUAL_DIR / "leakage_comparison.png", dpi=160)
     plt.close(fig)
 
+    top_features = feature_importance.head(10).sort_values("importance_mean")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.barh(top_features["feature"], top_features["importance_mean"], xerr=top_features["importance_std"])
+    ax.set(xlabel="Drop in average precision when permuted", title=f"{selected_name}: permutation importance (holdout)")
+    fig.tight_layout()
+    fig.savefig(VISUAL_DIR / "feature_importance.png", dpi=160)
+    plt.close(fig)
+
     psi_rows = shift.dropna(subset=["psi"]).sort_values("psi")
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.barh(psi_rows["feature"], psi_rows["psi"])
@@ -491,6 +519,7 @@ def write_model_card(
     capacity: pd.DataFrame,
     shift: pd.DataFrame,
     leakage: pd.DataFrame,
+    feature_importance: pd.DataFrame,
 ) -> None:
     path = REPO_ROOT / "docs" / "model_card.md"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -509,6 +538,9 @@ def write_model_card(
     leakage_gap_low = float(forest_rows.loc["naive_full_information", "roc_auc_gap_ci_low"])
     leakage_gap_high = float(forest_rows.loc["naive_full_information", "roc_auc_gap_ci_high"])
     brier_diff = selection["calibration"]["brier_difference_uncalibrated_minus_isotonic"]
+    top_features = ", ".join(
+        f"`{row.feature}` ({row.importance_mean:.3f})" for row in feature_importance.head(5).itertuples()
+    )
     card = f"""# Campaign Prophet model card
 
 ## Purpose
@@ -570,6 +602,12 @@ deployable pre-contact model on an identical random split. Random Forest ROC-AUC
 bootstrap gap is **{leakage_gap:+.4f}** ({leakage_gap_low:+.4f}, {leakage_gap_high:+.4f}). That is the
 measured operational cost of the decision-time feature policy. See `leakage_comparison.csv` and
 `visuals/leakage_comparison.png`.
+
+## Feature importance (predictive)
+
+Permutation importance on the temporal holdout (drop in average precision) ranks
+{top_features}. This is a predictive-association measure, **not a causal effect**.
+See `feature_importance.csv` and `visuals/feature_importance.png`.
 
 ## Distribution shift
 
@@ -719,6 +757,9 @@ def main() -> None:
     capacity_by_model = build_capacity_by_model(y_temporal_test, temporal_probabilities)
     capacity_by_model.to_csv(OUTPUT_DIR / "capacity_table_by_model.csv", index=False)
 
+    feature_importance = build_feature_importance(decision_pipeline, x_temporal_test, y_temporal_test)
+    feature_importance.to_csv(OUTPUT_DIR / "feature_importance.csv", index=False)
+
     total_subscribers = scored["actual_subscription"].sum()
     gain_rows = []
     for percent in range(1, 101):
@@ -770,9 +811,11 @@ def main() -> None:
             "brier_difference_ci_high": round(brier_high, 6),
         },
         "operational_scenario": economics,
-        "xgboost_available": XGBClassifier is not None,
-        "xgboost_import_error": XGBOOST_IMPORT_ERROR,
-        "model_scope": "three-model comparison (XGBoost)" if XGBClassifier is not None else "two-model scope: Logistic Regression and Random Forest",
+        "model_scope": "three-model comparison: Logistic Regression, Random Forest, Histogram Gradient Boosting",
+        "permutation_importance": {
+            "scope": "predictive_association_only",
+            "evaluated_on": "source_order_temporal_holdout",
+        },
     }
     (OUTPUT_DIR / "model_selection.json").write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
     make_visuals(
@@ -784,13 +827,12 @@ def main() -> None:
         gains,
         capacity_by_model,
         leakage,
+        feature_importance,
         shift,
     )
-    write_model_card(selection, calibration, capacity, shift, leakage)
+    write_model_card(selection, calibration, capacity, shift, leakage, feature_importance)
 
     print(f"Selected model on internal validation: {selected_name}")
-    if XGBOOST_IMPORT_ERROR:
-        print("XGBoost skipped: macOS OpenMP runtime not installed; two-model scope documented.")
     print(f"Holdout uncalibrated ROC-AUC: {calibration.loc['Uncalibrated', 'roc_auc']:.4f}")
     print(f"Calibration ranking Spearman (gate > 0.99): {ranking_spearman:.4f}")
     print(f"Brier diff (uncal - isotonic): {brier_mean:+.4f} [{brier_low:+.4f}, {brier_high:+.4f}]")

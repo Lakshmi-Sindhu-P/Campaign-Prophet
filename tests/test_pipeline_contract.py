@@ -53,9 +53,27 @@ def test_generated_artifact_set_is_complete():
         "cumulative_gains.csv",
         "leakage_comparison.csv",
         "distribution_shift.csv",
+        "feature_importance.csv",
     }
     produced = {path.name for path in (ROOT / "outputs" / "notebook_02").glob("*")}
     assert expected.issubset(produced)
+
+
+def test_model_comparison_is_three_model():
+    metrics = pd.read_csv(ROOT / "outputs" / "notebook_02" / "model_metrics.csv")
+    models = set(metrics["model"])
+    assert {"Logistic Regression", "Random Forest", "Histogram Gradient Boosting"}.issubset(models)
+    selection = json.loads((ROOT / "outputs" / "notebook_02" / "model_selection.json").read_text())
+    assert "three-model" in selection["model_scope"]
+
+
+def test_feature_importance_is_predictive_only():
+    importance = pd.read_csv(ROOT / "outputs" / "notebook_02" / "feature_importance.csv")
+    assert {"feature", "importance_mean", "importance_std"}.issubset(importance.columns)
+    assert importance["importance_mean"].is_monotonic_decreasing
+    assert len(importance) > 0
+    selection = json.loads((ROOT / "outputs" / "notebook_02" / "model_selection.json").read_text())
+    assert selection["permutation_importance"]["scope"] == "predictive_association_only"
 
 
 def test_leakage_comparison_quantifies_the_feature_policy_cost():
@@ -118,7 +136,7 @@ def test_capacity_table_is_consistent_with_ranked_holdout():
 
 def test_capacity_model_comparison_is_published():
     by_model = pd.read_csv(ROOT / "outputs" / "notebook_02" / "capacity_table_by_model.csv")
-    assert {"Logistic Regression", "Random Forest"}.issubset(set(by_model["model"]))
+    assert {"Logistic Regression", "Random Forest", "Histogram Gradient Boosting"}.issubset(set(by_model["model"]))
     top10 = by_model[by_model["capacity_percent"] == 10].set_index("model")
     # The higher-AUC model must not change the operational decision materially.
     assert abs(top10.loc["Random Forest", "responders_captured"] - top10.loc["Logistic Regression", "responders_captured"]) <= 50

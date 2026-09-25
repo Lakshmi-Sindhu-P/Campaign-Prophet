@@ -35,11 +35,16 @@ them. It is a portfolio analysis, not a production banking system.
 **Artifacts (`outputs/notebook_02/`).** `model_metrics.csv`, `validation_metrics.csv`,
 `leakage_comparison.csv`, `calibration_metrics.csv`, `distribution_shift.csv`,
 `scored_temporal_holdout.csv`, `capacity_table.csv`, `capacity_table_by_model.csv`,
-`cumulative_gains.csv`, `model_selection.json`.
+`cumulative_gains.csv`, `feature_importance.csv`, `model_selection.json`.
+
+**Model scope.** Three canonical models: Logistic Regression, Random Forest, and
+Histogram Gradient Boosting (sklearn). Random Forest is operational (selected on the internal
+validation slice).
 
 **Tech stack.** Python 3.10–3.14; numpy 2.3.3; pandas 2.3.3; scipy 1.16.2;
-scikit-learn 1.7.2; xgboost 3.0.4 (**optional/gated** on macOS OpenMP `libomp`);
+scikit-learn 1.7.2 (all three models, incl. `HistGradientBoostingClassifier`);
 matplotlib 3.10.6; seaborn 0.13.2; jupyterlab 4.4.7 / nbconvert 7.16.6; pytest 8.4.2.
+No system OpenMP dependency: single-threaded numerics via `OMP_NUM_THREADS=1`.
 
 **Folder structure.**
 ```
@@ -82,6 +87,10 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
   **2.05×** lift; top-20% **37.8% / 1.89×**.
 - Calibration does not transfer: uncalibrated Brier **0.2257** vs isotonic **0.2472**
   (paired diff −0.0215, CI −0.0296 to −0.0129); ranking preserved (Spearman 0.9956).
+- Third model (Histogram Gradient Boosting): benchmark ROC-AUC **0.8047**, holdout **0.5990**;
+  naive full-info **0.9510** (largest leakage gap **+0.1459**). Does not beat RF on internal
+  validation, so RF stays operational.
+- Permutation importance (holdout, RF): top features `poutcome`, `pdays`, `month`.
 
 ---
 
@@ -115,8 +124,9 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
   `jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=900`.
 - Raw data is never committed; only the processed CSV and regeneration script.
 - No financial targeting recommendation is ever published; economics are labeled scenarios.
-- If XGBoost cannot import (missing `libomp`), document the **two-model scope**; do not install
-  system dependencies without asking.
+- Models must be **pure scikit-learn** so they run identically on macOS and CI without system
+  dependencies; do not add estimators that require a system OpenMP runtime. Keep
+  `OMP_NUM_THREADS=1` / `n_jobs=1` so artifacts stay byte-identical.
 
 **Commit style.** Terse, imperative; recent history uses short messages (e.g. "Update
 README.md"). Group a phase of work into one coherent commit.
@@ -166,3 +176,11 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.3 — plan amendment)** — XGBoost **replaced by scikit-learn
+  `HistGradientBoostingClassifier`** as the canonical third model. Reason: `brew install libomp`
+  is impossible in this environment (Homebrew owned by another user, no sudo), and an
+  XGBoost-on-macOS vs XGBoost-on-Linux dependency would break the cross-platform CI drift guard.
+  Pure sklearn keeps one artifact set everywhere and stays byte-identical. This reverses the
+  earlier "XGBoost optional/gated" decision and the locked Phase 7 wording; documented here per
+  the conflict rule. Also added permutation importance (predictive association only). Removed
+  `xgboost` from `requirements.txt`.
