@@ -56,7 +56,7 @@ notebooks/         01_... (prepare_data), 02_... (run_modeling) thin runpy wrapp
 outputs/notebook_01/  Notebook 01 handoff tables
 outputs/notebook_02/  model / leakage / calibration / shift / capacity artifacts
 outputs/experiment_design/  power_analysis.json
-scripts/           prepare_data.py, run_modeling.py, recommend.py, experiment_power.py
+scripts/           prepare_data.py, run_modeling.py, tune_sensitivity.py, recommend.py, experiment_power.py
 tests/             test_pipeline_contract.py
 visuals/           generated evaluation charts
 ```
@@ -100,6 +100,7 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
 ```bash
 .venv/bin/python scripts/prepare_data.py
 .venv/bin/python scripts/run_modeling.py
+.venv/bin/python scripts/tune_sensitivity.py
 .venv/bin/python scripts/recommend.py --capacity 20
 .venv/bin/python scripts/experiment_power.py
 .venv/bin/python -m pytest
@@ -176,6 +177,11 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.6)** — Added a bounded hyperparameter sensitivity study
+  (`scripts/tune_sensitivity.py`) scored on the internal validation slice only. Measured result:
+  best RF config improves validation AP by only **+0.0009**; best HGB config (+0.0136) still
+  trails untuned RF. Shipped defaults stand, and "why no tuning" is now evidence rather than
+  assertion. The final holdout is never used for tuning.
 - **2026-09 (Phase 7.3 — plan amendment)** — XGBoost **replaced by scikit-learn
   `HistGradientBoostingClassifier`** as the canonical third model. Reason: `brew install libomp`
   is impossible in this environment (Homebrew owned by another user, no sudo), and an

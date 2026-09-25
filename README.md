@@ -9,7 +9,7 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-15_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-16_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -142,6 +142,23 @@ Models are selected by Average Precision on an **internal validation slice of th
 <br/>
 
 **Random Forest** leads on ranking quality and is the operational model, selected on the internal validation slice. The pipeline runs a **three-model comparison** — Logistic Regression, Random Forest, and Histogram Gradient Boosting. All three are pure scikit-learn, so there is **no system OpenMP dependency** and the pipeline is reproducible across platforms and CI.
+
+<details>
+<summary>🎛️ &nbsp;<b>Hyperparameter sensitivity: defaults stand (measured, not asserted)</b></summary>
+
+<br/>
+
+A small grid per model is scored on the **internal validation slice only** (the final holdout is never used for tuning). The best config per model:
+
+| Model | Best config | Validation AP | Default AP | Δ |
+|:------|:------------|--------------:|-----------:|--:|
+| Random Forest | `trees200` | 0.1693 | 0.1684 | +0.0009 |
+| Histogram Gradient Boosting | `small` | 0.1619 | 0.1483 | +0.0136 |
+| Logistic Regression | `C0.1` | 0.1353 | 0.1344 | +0.0009 |
+
+No config materially improves validation ranking, and tuned HGB still trails untuned Random Forest — so the shipped defaults stand. Full grid in `outputs/notebook_02/tuning_sensitivity.csv`. This is the evidence behind "no tuning", not a claim.
+
+</details>
 
 <details>
 <summary>🔓 &nbsp;<b>The leakage cost, measured (not asserted)</b></summary>
@@ -393,6 +410,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 5 — Capacity recommendation CLI
 - [x] Phase 6 — Randomised-holdback experiment design + power analysis
 - [x] Phase 7.3 — Three-model comparison incl. Histogram Gradient Boosting + permutation importance
+- [x] Phase 7.6 — Bounded hyperparameter sensitivity (defaults stand)
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---
@@ -411,6 +429,9 @@ python3 -m venv .venv
 
 # Train, validate, calibrate, quantify shift, and create decision artifacts.
 .venv/bin/python scripts/run_modeling.py
+
+# Bounded hyperparameter sensitivity on the internal validation slice.
+.venv/bin/python scripts/tune_sensitivity.py
 
 # Capacity recommendation + reproducible experiment power arithmetic.
 .venv/bin/python scripts/recommend.py --capacity 20

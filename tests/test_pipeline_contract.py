@@ -54,6 +54,7 @@ def test_generated_artifact_set_is_complete():
         "leakage_comparison.csv",
         "distribution_shift.csv",
         "feature_importance.csv",
+        "tuning_sensitivity.csv",
     }
     produced = {path.name for path in (ROOT / "outputs" / "notebook_02").glob("*")}
     assert expected.issubset(produced)
@@ -65,6 +66,17 @@ def test_model_comparison_is_three_model():
     assert {"Logistic Regression", "Random Forest", "Histogram Gradient Boosting"}.issubset(models)
     selection = json.loads((ROOT / "outputs" / "notebook_02" / "model_selection.json").read_text())
     assert "three-model" in selection["model_scope"]
+
+
+def test_tuning_sensitivity_shows_defaults_stand():
+    tuning = pd.read_csv(ROOT / "outputs" / "notebook_02" / "tuning_sensitivity.csv")
+    assert {"model", "config", "roc_auc", "average_precision"}.issubset(tuning.columns)
+    assert set(tuning["config"]).issuperset({"default"})
+    assert {"Logistic Regression", "Random Forest", "Histogram Gradient Boosting"}.issubset(set(tuning["model"]))
+    for _, group in tuning.groupby("model"):
+        default = group[group["config"] == "default"]["average_precision"].iloc[0]
+        # Tuning must not materially change validation ranking; else defaults should not stand.
+        assert group["average_precision"].max() - default < 0.02
 
 
 def test_feature_importance_is_predictive_only():
