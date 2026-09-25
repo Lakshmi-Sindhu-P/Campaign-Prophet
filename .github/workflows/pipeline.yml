@@ -1,0 +1,33 @@
+name: pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+      - name: Prepare data
+        run: python scripts/prepare_data.py
+      - name: SQL analyst layer
+        run: python scripts/run_sql.py
+      - name: Modeling pipeline
+        run: python scripts/run_modeling.py
+      - name: Tuning sensitivity
+        run: python scripts/tune_sensitivity.py
+      - name: Capacity report
+        run: python scripts/build_report.py
+      - name: Power analysis
+        run: python scripts/experiment_power.py
+      - name: Contract tests
+        run: python -m pytest -q
+      - name: Artifact drift guard
+        run: python scripts/check_drift.py

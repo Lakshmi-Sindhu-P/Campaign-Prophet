@@ -34,6 +34,8 @@ them. It is a portfolio analysis, not a production banking system.
 7. `scripts/experiment_power.py` — reproducible power / minimum-detectable-effect design.
 8. `tests/test_pipeline_contract.py` — contract tests pinning data, artifacts, decision-layer,
    calibration, power, SQL-parity, report parity, and impact outputs.
+9. `scripts/check_drift.py` — CI guard: regenerated artifacts must match the committed ones
+   (numeric within tolerance, text exactly). Driven by `.github/workflows/pipeline.yml`.
 
 **Data flow.** `data/processed/cleaned_feature_engineered_bank_marketing.csv` (tracked input)
 → `run_modeling.py` → `outputs/notebook_02/*` + `visuals/*` + `docs/model_card.md`.
@@ -58,17 +60,19 @@ No system OpenMP dependency: single-threaded numerics via `OMP_NUM_THREADS=1`.
 config/            roi_scenarios.json (scenario economics)
 data/processed/    tracked modeling input (processed CSV)
 data/raw/          instructions only; raw UCI zips excluded from Git
-docs/              data_dictionary.md, experiment_design.md, model_card.md (generated)
+docs/              data_dictionary.md, experiment_design.md, monitoring.md, model_card.md (generated)
 notebooks/         01_... (prepare_data), 02_... (run_modeling) thin runpy wrappers
 outputs/notebook_01/  Notebook 01 handoff tables
 outputs/notebook_02/  model / leakage / calibration / shift / capacity artifacts
 outputs/experiment_design/  power_analysis.json
 outputs/report/    capacity_report.html (self-contained)
 app/               main.py (thin FastAPI /recommend endpoint; optional)
-scripts/           prepare_data.py, run_sql.py, run_modeling.py, tune_sensitivity.py, recommend.py, build_report.py, experiment_power.py
+scripts/           prepare_data.py, run_sql.py, run_modeling.py, tune_sensitivity.py, recommend.py, build_report.py, experiment_power.py, check_drift.py
 sql/               portable segment queries (expected_value, job/poutcome crosstabs)
 tests/             test_pipeline_contract.py
 visuals/           generated evaluation charts
+Dockerfile         one-command reproduction
+.github/workflows/ pipeline.yml (full pipeline + drift guard)
 ```
 
 ---
@@ -131,6 +135,9 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
   is retained only as a labeled overlay.
 - Every published README/model-card number must trace to a regenerated artifact; the contract
   tests enforce this. After changing any metric, regenerate artifacts and update the README.
+- CI (`.github/workflows/pipeline.yml`) re-runs the full pipeline and then `scripts/check_drift.py`.
+  Committed numeric artifacts must match within rtol 1e-6 and text artifacts exactly; PNGs and the
+  base64 report are excluded. A metric change requires regenerating and committing artifacts.
 - `docs/model_card.md` is **generated** by `run_modeling.py`; edit the template, not the output.
 - No comments in code unless they explain non-obvious intent; docstrings for module/function.
 - Notebooks are thin `runpy` wrappers; re-execute with
@@ -189,6 +196,14 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.2)** — Added CI (`.github/workflows/pipeline.yml`) that re-runs the full
+  pipeline on Linux and then `scripts/check_drift.py`. Drift is compared **with tolerance**
+  (rtol 1e-6), not byte-identity, because macOS Accelerate vs Linux OpenBLAS differ below that;
+  PNGs and the base64 report are excluded from the numeric contract. Rationale: enforce the
+  reproducibility claim without false alarms from cross-platform FP.
+- **2026-09 (Phase 7.8)** — Added a `Dockerfile` (one-command reproduction) and
+  `docs/monitoring.md` (PSI thresholds, label-drift, ranking/calibration health, retraining
+  trigger). Design only: no live serving metrics or automated retraining exist.
 - **2026-09 (Phase 7.1)** — Added a self-contained `outputs/report/capacity_report.html`
   (`scripts/build_report.py`, embedded charts/tables, no server) and a thin optional FastAPI
   `app/main.py` `/recommend` endpoint reusing `recommend.summarize`. Both read the artifacts, so

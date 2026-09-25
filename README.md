@@ -10,6 +10,7 @@
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Tests](https://img.shields.io/badge/pytest-20_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Pipeline](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet/actions/workflows/pipeline.yml)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -372,7 +373,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
 | 🗄️ **SQL verified, not decorative** | Portable segment queries in `sql/` are contract-tested to equal the pandas handoffs. |
 | 🌐 **Interactive surface** | A self-contained `capacity_report.html` and a thin FastAPI `/recommend` endpoint read the same artifacts — they cannot disagree with the numbers. |
-| ✅ **Mechanically reproducible** | 18 pytest contract tests pin every published metric to regenerated artifacts, and deterministic `n_jobs=1` re-runs are byte-identical. |
+| ✅ **Mechanically reproducible** | 20 pytest contract tests pin every published metric to regenerated artifacts; deterministic `n_jobs=1` re-runs are byte-identical, and CI fails if the regenerated artifacts drift. |
 
 ---
 
@@ -399,9 +400,11 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 ├── 📚 docs/                 ← data dictionary, model card, experiment design
 ├── 🗄️  sql/                  ← portable segment queries (verified against pandas)
 ├── 🌐 app/                   ← thin FastAPI endpoint over the artifacts
-├── 🛠️  scripts/              ← prepare_data · run_modeling · run_sql · tune_sensitivity · recommend · build_report · experiment_power
+├── 🛠️  scripts/              ← prepare_data · run_modeling · run_sql · tune_sensitivity · recommend · build_report · experiment_power · check_drift
 ├── 🧪 tests/                ← pipeline contract checks
 ├── ⚙️  config/               ← roi_scenarios.json
+├── 🐳 Dockerfile            ← one-command reproduction
+├── 🔁 .github/workflows/    ← CI: full pipeline + artifact drift guard
 ├── MEMORY.md               ← project memory (architecture · facts · decisions)
 ├── AGENTS.md               ← agent memory protocol
 ├── requirements.txt
@@ -436,6 +439,8 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 7.4 — SQL analyst layer (verified equal to pandas handoffs)
 - [x] Phase 7.7 — Subgroup error analysis (descriptive, no fairness certification)
 - [x] Phase 7.1 — Self-contained capacity report + optional FastAPI endpoint
+- [x] Phase 7.8 — Dockerfile + monitoring design (`docs/monitoring.md`)
+- [x] Phase 7.2 — CI with tolerance-aware artifact drift guard
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---
@@ -474,7 +479,13 @@ python3 -m venv .venv
 
 # Verify the data, artifact, and decision-layer contracts.
 .venv/bin/python -m pytest
+
+# Fail if regenerated artifacts drift from the committed ones (also run in CI).
+.venv/bin/python scripts/check_drift.py
 ```
+
+Or reproduce everything in one container: `docker build -t campaign-prophet . && docker run --rm campaign-prophet`.
+The GitHub Actions workflow (`.github/workflows/pipeline.yml`) runs the same sequence and the drift guard on every push and PR.
 
 All three models are pure scikit-learn with single-threaded numerics (`OMP_NUM_THREADS=1`, `n_jobs=1`), so the pipeline needs no system OpenMP runtime and re-runs are byte-identical.
 
