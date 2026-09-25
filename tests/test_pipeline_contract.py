@@ -56,6 +56,7 @@ def test_generated_artifact_set_is_complete():
         "feature_importance.csv",
         "tuning_sensitivity.csv",
         "impact_statement.md",
+        "subgroup_errors.csv",
     }
     produced = {path.name for path in (ROOT / "outputs" / "notebook_02").glob("*")}
     assert expected.issubset(produced)
@@ -67,6 +68,17 @@ def test_model_comparison_is_three_model():
     assert {"Logistic Regression", "Random Forest", "Histogram Gradient Boosting"}.issubset(models)
     selection = json.loads((ROOT / "outputs" / "notebook_02" / "model_selection.json").read_text())
     assert "three-model" in selection["model_scope"]
+
+
+def test_subgroup_error_analysis_is_descriptive():
+    subgroups = pd.read_csv(ROOT / "outputs" / "notebook_02" / "subgroup_errors.csv")
+    assert set(subgroups["dimension"]) == {"age_group", "job", "marital"}
+    assert {"records", "responders", "selection_rate", "precision", "recall", "coverage"}.issubset(subgroups.columns)
+    assert subgroups["recall"].between(0, 1).all()
+    for _, group in subgroups.groupby("dimension"):
+        assert abs(group["coverage"].sum() - 100) < 1e-6
+    selection = json.loads((ROOT / "outputs" / "notebook_02" / "model_selection.json").read_text())
+    assert "no_fairness_certification" in selection["subgroup_analysis"]["scope"]
 
 
 def test_sql_layer_matches_pandas_handoffs():

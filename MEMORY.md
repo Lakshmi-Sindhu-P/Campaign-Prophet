@@ -40,7 +40,7 @@ them. It is a portfolio analysis, not a production banking system.
 `leakage_comparison.csv`, `calibration_metrics.csv`, `distribution_shift.csv`,
 `scored_temporal_holdout.csv`, `capacity_table.csv`, `capacity_table_by_model.csv`,
 `cumulative_gains.csv`, `feature_importance.csv`, `tuning_sensitivity.csv`,
-`impact_statement.md`, `model_selection.json`.
+`impact_statement.md`, `subgroup_errors.csv`, `model_selection.json`.
 
 **Model scope.** Three canonical models: Logistic Regression, Random Forest, and
 Histogram Gradient Boosting (sklearn). Random Forest is operational (selected on the internal
@@ -184,6 +184,10 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.7)** — Added a descriptive subgroup error analysis at top-20% capacity
+  (`subgroup_errors.csv`, `visuals/subgroup_errors.png`) over age band, job, and marital status.
+  Explicitly **not** a fairness certification and caveated by drift; records where the policy
+  under-serves (e.g. blue-collar recall 19% vs retired 50%).
 - **2026-09 (Phase 7.4)** — Added a portable SQL analyst layer (`sql/*.sql`,
   `scripts/run_sql.py`) that reproduces the Notebook 01 segment handoffs via in-memory SQLite.
   Contract-tested to equal the pandas outputs (byte-identical here). Rationale: closes the

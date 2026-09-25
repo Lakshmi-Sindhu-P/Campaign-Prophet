@@ -9,7 +9,7 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-18_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-19_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -257,6 +257,19 @@ scores. Calibration is kept only as a diagnostic — and honestly reported as un
 
 </details>
 
+<details>
+<summary>🧍 &nbsp;<b>Subgroup error analysis (descriptive, not a fairness certification)</b></summary>
+
+<br/>
+
+At top-20% capacity, responder recall varies across subgroups — e.g. by age band
+(`25-35` 37%, `65+` 44%) and job (`blue-collar` 19%, `retired` 50%). This is a descriptive
+error breakdown to expose where the policy under-serves, caveated by the drift regime and the
+absence of a control group. It is **not** a fairness audit. Full table in
+`outputs/notebook_02/subgroup_errors.csv`, chart in `visuals/subgroup_errors.png`.
+
+</details>
+
 ---
 
 ## 🎯 Targeting Results
@@ -343,6 +356,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 </p>
 <p align="center">
   <img src="visuals/cumulative_gains.png" width="49%"/>
+  <img src="visuals/subgroup_errors.png" width="49%"/>
 </p>
 
 ---
@@ -417,6 +431,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 7.6 — Bounded hyperparameter sensitivity (defaults stand)
 - [x] Phase 7.5 — Generated, non-causal impact statement
 - [x] Phase 7.4 — SQL analyst layer (verified equal to pandas handoffs)
+- [x] Phase 7.7 — Subgroup error analysis (descriptive, no fairness certification)
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---

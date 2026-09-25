@@ -56,5 +56,14 @@
   "permutation_importance": {
     "scope": "predictive_association_only",
     "evaluated_on": "source_order_temporal_holdout"
+  },
+  "subgroup_analysis": {
+    "capacity_percent": 20,
+    "dimensions": [
+      "age_group",
+      "job",
+      "marital"
+    ],
+    "scope": "descriptive_error_analysis_no_fairness_certification"
   }
 }

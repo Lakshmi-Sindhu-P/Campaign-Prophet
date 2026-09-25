@@ -78,6 +78,8 @@ NAIVE_EXCLUDED_FEATURES = EXCLUDED_FEATURES - LEAKY_FEATURES
 SHIFT_NUMERIC = ("euribor3m", "nr.employed", "pdays", "cons.conf.idx", "emp.var.rate")
 SHIFT_CATEGORICAL = ("month", "contact", "poutcome")
 CALIBRATION_METHODS = ("Uncalibrated", "Isotonic", "Sigmoid")
+SUBGROUP_DIMENSIONS = ("age_group", "job", "marital")
+SUBGROUP_CAPACITY = 20
 
 
 def build_preprocessor(features: pd.DataFrame) -> ColumnTransformer:
@@ -228,6 +230,38 @@ def build_capacity_table(scored: pd.DataFrame) -> pd.DataFrame:
                 ),
             }
         )
+    return pd.DataFrame(rows)
+
+
+def build_subgroup_errors(
+    holdout: pd.DataFrame, dimensions: tuple[str, ...] = SUBGROUP_DIMENSIONS, capacity_percent: int = SUBGROUP_CAPACITY
+) -> pd.DataFrame:
+    """Descriptive subgroup error/coverage analysis at a fixed top-K capacity (no fairness claim)."""
+    total_selected = max(1, int(np.ceil(len(holdout) * capacity_percent / 100)))
+    frame = holdout.copy()
+    frame["selected"] = frame["rank"] <= total_selected
+    captured_total = int(frame.loc[frame["selected"], "actual_subscription"].sum())
+    rows = []
+    for dimension in dimensions:
+        for name, group in frame.groupby(dimension, observed=True):
+            size = len(group)
+            responders = int(group["actual_subscription"].sum())
+            selected = int(group["selected"].sum())
+            captured = int(group.loc[group["selected"], "actual_subscription"].sum())
+            rows.append(
+                {
+                    "dimension": dimension,
+                    "subgroup": str(name),
+                    "records": size,
+                    "responders": responders,
+                    "base_rate": responders / size,
+                    "selected": selected,
+                    "selection_rate": selected / size,
+                    "precision": captured / selected if selected else np.nan,
+                    "recall": captured / responders if responders else np.nan,
+                    "coverage": 100 * captured / captured_total if captured_total else np.nan,
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -448,6 +482,7 @@ def make_visuals(
     capacity_by_model: pd.DataFrame,
     leakage: pd.DataFrame,
     feature_importance: pd.DataFrame,
+    subgroup_errors: pd.DataFrame,
     shift: pd.DataFrame,
 ) -> None:
     VISUAL_DIR.mkdir(parents=True, exist_ok=True)
@@ -511,6 +546,16 @@ def make_visuals(
     ax.set(xlabel="Drop in average precision when permuted", title=f"{selected_name}: permutation importance (holdout)")
     fig.tight_layout()
     fig.savefig(VISUAL_DIR / "feature_importance.png", dpi=160)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(1, len(SUBGROUP_DIMENSIONS), figsize=(15, 5))
+    for ax, dimension in zip(axes, SUBGROUP_DIMENSIONS):
+        rows = subgroup_errors[subgroup_errors["dimension"] == dimension].sort_values("recall")
+        ax.barh(rows["subgroup"], 100 * rows["recall"])
+        ax.set(xlabel="Recall (%)", title=dimension)
+    fig.suptitle(f"Subgroup responder recall at top-{SUBGROUP_CAPACITY}% capacity (holdout)")
+    fig.tight_layout()
+    fig.savefig(VISUAL_DIR / "subgroup_errors.png", dpi=160)
     plt.close(fig)
 
     psi_rows = shift.dropna(subset=["psi"]).sort_values("psi")
@@ -780,6 +825,12 @@ def main() -> None:
     feature_importance = build_feature_importance(decision_pipeline, x_temporal_test, y_temporal_test)
     feature_importance.to_csv(OUTPUT_DIR / "feature_importance.csv", index=False)
 
+    holdout = data.iloc[split_at:][list(SUBGROUP_DIMENSIONS)].copy()
+    holdout["source_row"] = data.index[split_at:]
+    holdout = holdout.merge(scored[["source_row", "actual_subscription", "rank"]], on="source_row", how="left")
+    subgroup_errors = build_subgroup_errors(holdout)
+    subgroup_errors.to_csv(OUTPUT_DIR / "subgroup_errors.csv", index=False)
+
     total_subscribers = scored["actual_subscription"].sum()
     gain_rows = []
     for percent in range(1, 101):
@@ -836,6 +887,11 @@ def main() -> None:
             "scope": "predictive_association_only",
             "evaluated_on": "source_order_temporal_holdout",
         },
+        "subgroup_analysis": {
+            "capacity_percent": SUBGROUP_CAPACITY,
+            "dimensions": list(SUBGROUP_DIMENSIONS),
+            "scope": "descriptive_error_analysis_no_fairness_certification",
+        },
     }
     (OUTPUT_DIR / "model_selection.json").write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
     make_visuals(
@@ -848,6 +904,7 @@ def main() -> None:
         capacity_by_model,
         leakage,
         feature_importance,
+        subgroup_errors,
         shift,
     )
     write_model_card(selection, calibration, capacity, shift, leakage, feature_importance)
