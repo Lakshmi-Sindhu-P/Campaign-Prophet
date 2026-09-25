@@ -21,13 +21,17 @@ them. It is a portfolio analysis, not a production banking system.
 1. `scripts/prepare_data.py` — load/rebuild the tracked processed dataset; write Notebook 01
    descriptive handoffs to `outputs/notebook_01/`. `--refresh-data` downloads the public UCI
    archive to a temp dir (raw data never committed).
-2. `scripts/run_modeling.py` — the core pipeline: random benchmark, leakage comparison,
+2. `scripts/run_sql.py` — reproduce the Notebook 01 segment handoffs in portable SQL
+   (`sql/*.sql`) and verify them against the pandas computation.
+3. `scripts/run_modeling.py` — the core pipeline: random benchmark, leakage comparison,
    internal source-order validation, temporal-holdout reporting, out-of-fold calibration,
-   distribution shift, capacity tables, visuals, model card, and `model_selection.json`.
-3. `scripts/recommend.py --capacity N` — decision-time capacity recommendation CLI.
-4. `scripts/experiment_power.py` — reproducible power / minimum-detectable-effect design.
-5. `tests/test_pipeline_contract.py` — contract tests pinning data, artifacts, decision-layer,
-   calibration, and power outputs.
+   distribution shift, capacity tables, permutation importance, impact statement, visuals,
+   model card, and `model_selection.json`.
+4. `scripts/tune_sensitivity.py` — bounded hyperparameter sensitivity on the validation slice.
+5. `scripts/recommend.py --capacity N` — decision-time capacity recommendation CLI.
+6. `scripts/experiment_power.py` — reproducible power / minimum-detectable-effect design.
+7. `tests/test_pipeline_contract.py` — contract tests pinning data, artifacts, decision-layer,
+   calibration, power, SQL-parity, and impact outputs.
 
 **Data flow.** `data/processed/cleaned_feature_engineered_bank_marketing.csv` (tracked input)
 → `run_modeling.py` → `outputs/notebook_02/*` + `visuals/*` + `docs/model_card.md`.
@@ -57,7 +61,8 @@ notebooks/         01_... (prepare_data), 02_... (run_modeling) thin runpy wrapp
 outputs/notebook_01/  Notebook 01 handoff tables
 outputs/notebook_02/  model / leakage / calibration / shift / capacity artifacts
 outputs/experiment_design/  power_analysis.json
-scripts/           prepare_data.py, run_modeling.py, tune_sensitivity.py, recommend.py, experiment_power.py
+scripts/           prepare_data.py, run_sql.py, run_modeling.py, tune_sensitivity.py, recommend.py, experiment_power.py
+sql/               portable segment queries (expected_value, job/poutcome crosstabs)
 tests/             test_pipeline_contract.py
 visuals/           generated evaluation charts
 ```
@@ -100,6 +105,7 @@ First 80% = training period; final 20% = temporal holdout. Within the training p
 **Run order.**
 ```bash
 .venv/bin/python scripts/prepare_data.py
+.venv/bin/python scripts/run_sql.py
 .venv/bin/python scripts/run_modeling.py
 .venv/bin/python scripts/tune_sensitivity.py
 .venv/bin/python scripts/recommend.py --capacity 20
@@ -178,6 +184,10 @@ Append new entries at the bottom. Format: `YYYY-MM-DD — decision — rationale
   calibration artifacts. Rationale: the repo claims mechanical reproducibility, so consumed
   float values should be deterministic, not just equal to displayed precision. No published
   metric changed.
+- **2026-09 (Phase 7.4)** — Added a portable SQL analyst layer (`sql/*.sql`,
+  `scripts/run_sql.py`) that reproduces the Notebook 01 segment handoffs via in-memory SQLite.
+  Contract-tested to equal the pandas outputs (byte-identical here). Rationale: closes the
+  "no SQL" gap with a verified surface rather than a decorative one.
 - **2026-09 (Phase 7.5)** — Added a generated `impact_statement.md` (top-10% coverage/lift),
   surfaced in README and model card and pinned by a contract test. Framed descriptively, never
   causally — no control group exists, so no uplift claim is ever made.

@@ -69,6 +69,16 @@ def test_model_comparison_is_three_model():
     assert "three-model" in selection["model_scope"]
 
 
+def test_sql_layer_matches_pandas_handoffs():
+    import sys
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import run_sql
+
+    results = run_sql.compare_frames()
+    assert results and all(results.values()), results
+
+
 def test_impact_statement_is_generated_and_non_causal():
     statement = (ROOT / "outputs" / "notebook_02" / "impact_statement.md").read_text()
     assert "not causal uplift" in statement

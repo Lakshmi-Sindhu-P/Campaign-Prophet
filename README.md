@@ -9,7 +9,7 @@
 [![pandas](https://img.shields.io/badge/pandas-2.3-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Version](https://img.shields.io/badge/Version-V2-6f42c1?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
 [![Status](https://img.shields.io/badge/Status-Portfolio-FFB300?style=flat-square)](https://github.com/Lakshmi-Sindhu-P/Campaign-Prophet)
-[![Tests](https://img.shields.io/badge/pytest-17_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
+[![Tests](https://img.shields.io/badge/pytest-18_passing-1D9E75?style=flat-square&logo=pytest&logoColor=white)](tests/test_pipeline_contract.py)
 [![License](https://img.shields.io/badge/License-MIT-1D9E75?style=flat-square)](LICENSE)
 
 <br/>
@@ -356,7 +356,8 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 | 📐 **Calibration gate** | Calibrators are tested for transfer and reported unfit under shift — instead of shipping a misleading probability. |
 | 🎯 **Capacity, not currency** | Recommendations are coverage/lift at a percent-of-population capacity, so they cannot saturate like a € budget. |
 | 🧪 **Uncertainty everywhere** | Bootstrap CIs on lift/coverage and paired AUC gaps; binomial tests on precision@K. |
-| ✅ **Mechanically reproducible** | 13 pytest contract tests pin every published metric to regenerated artifacts, and deterministic `n_jobs=1` re-runs are byte-identical. |
+| 🗄️ **SQL verified, not decorative** | Portable segment queries in `sql/` are contract-tested to equal the pandas handoffs. |
+| ✅ **Mechanically reproducible** | 18 pytest contract tests pin every published metric to regenerated artifacts, and deterministic `n_jobs=1` re-runs are byte-identical. |
 
 ---
 
@@ -380,7 +381,8 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 │
 ├── 🖼️  visuals/              ← generated evaluation charts + banner
 ├── 📚 docs/                 ← data dictionary, model card, experiment design
-├── 🛠️  scripts/              ← prepare_data · run_modeling · recommend · experiment_power
+├── 🗄️  sql/                  ← portable segment queries (verified against pandas)
+├── 🛠️  scripts/              ← prepare_data · run_modeling · run_sql · tune_sensitivity · recommend · experiment_power
 ├── 🧪 tests/                ← pipeline contract checks
 ├── ⚙️  config/               ← roi_scenarios.json
 ├── MEMORY.md               ← project memory (architecture · facts · decisions)
@@ -414,6 +416,7 @@ Two thin, runnable notebooks wrap the scripts; run them from the repository root
 - [x] Phase 7.3 — Three-model comparison incl. Histogram Gradient Boosting + permutation importance
 - [x] Phase 7.6 — Bounded hyperparameter sensitivity (defaults stand)
 - [x] Phase 7.5 — Generated, non-causal impact statement
+- [x] Phase 7.4 — SQL analyst layer (verified equal to pandas handoffs)
 - [ ] Optional — External / new-period validation with true timestamps
 
 ---
@@ -432,6 +435,9 @@ python3 -m venv .venv
 
 # Train, validate, calibrate, quantify shift, and create decision artifacts.
 .venv/bin/python scripts/run_modeling.py
+
+# SQL analyst layer — verifies portable SQL equals the pandas handoffs.
+.venv/bin/python scripts/run_sql.py
 
 # Bounded hyperparameter sensitivity on the internal validation slice.
 .venv/bin/python scripts/tune_sensitivity.py
